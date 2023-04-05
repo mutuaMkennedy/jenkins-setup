@@ -1,0 +1,51 @@
+# Development environment docker compose file
+# Version of docker compose to use
+version: '3.9'
+
+# services we want to run
+services:
+  jenkins:
+    # NOTE: opting for 'always' will always restart service even if you try to stop it
+    restart: unless-stopped
+    # NOTE: If hosting images on docker hub, ECR or similar,
+    # CONTD: you can use the repository URI making it easy to push and pull images.
+    # CONTD: (ECR example) image: <myactid>.dkr.ecr.us-east-1.amazonaws.com/<myrepo>:nginx
+    # CONTD: then you can run docker compose -f docker-compose-prod.yml push or pull
+
+    # image name and a tag name
+    image: dev:jenkins
+    # To avoid permission issues we define a root user
+    user: root
+    # Any name that can further help ID this container
+    container_name: jenkins-dev
+    build: ./jenkins/
+    ports:
+      - "8080:8080"
+    volumes:
+      - /jenkins/data:/var/jenkins_home
+      - /jenkins/artifacts:/var/jenkins_artifacts
+      - /var/run/docker.sock:/var/run/docker.sock 
+
+  nginx:
+    # NOTE: opting for 'always' will always restart service even if you try to stop it
+    restart: unless-stopped
+    # NOTE: If hosting images on docker hub, ECR or similar,
+    # CONTD: you can use the repository URI making it easy to push and pull images.
+    # CONTD: (ECR example) image: <myactid>.dkr.ecr.us-east-1.amazonaws.com/<myrepo>:nginx
+    # CONTD: then you can run docker compose -f docker-compose-prod.yml push or pull
+
+    # image name and a tag name
+    image: dev:nginx
+    # To avoid permission issues we define a root user
+    user: root
+    # Any name that can further help ID this container
+    container_name: nginx-dev
+    build: ./nginx/
+    ports:
+      - "80:80"
+    volumes:
+      # switch between dev (no ssl) and production (with ssl) nginx configs files
+      - ./nginx/development:/etc/nginx/conf.d
+    depends_on:
+      - jenkins
+

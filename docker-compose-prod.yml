@@ -1,0 +1,58 @@
+# Development environment docker compose file
+# Version of docker compose to use
+version: '3.9'
+
+# services we want to run
+services:
+
+  jenkins:
+    # NOTE: opting for 'always' will always restart service even if you try to stop it
+    restart: unless-stopped
+    # NOTE: If hosting images on docker hub, ECR or similar,
+    # CONTD: you can use the repository URI making it easy to push and pull images.
+    # CONTD: (ECR example) image: <myactid>.dkr.ecr.us-east-1.amazonaws.com/<myrepo>:nginx
+    # CONTD: then you can run docker compose -f docker-compose-prod.yml push or pull
+
+    # image name and a tag name
+    image: public.ecr.aws/e6e1v7l0/jenkins:jenkins
+    # To avoid permission issues we define a root user
+    user: root
+    # Any name that can further help ID this container
+    container_name: jenkins-prod
+    build: ./jenkins/
+    ports:
+      - "8080:8080"
+    volumes:
+      - /jenkins/data:/var/jenkins_home
+      - /jenkins/artifacts:/var/jenkins_artifacts
+      - /var/run/docker.sock:/var/run/docker.sock 
+
+  nginx:
+    # NOTE: opting for 'always' will always restart service even if you try to stop it
+    restart: unless-stopped
+    # NOTE: If hosting images on docker hub, ECR or similar,
+    # CONTD: you can use the repository URI making it easy to push and pull images.
+    # CONTD: (ECR example) image: <myactid>.dkr.ecr.us-east-1.amazonaws.com/<myrepo>:nginx
+    # CONTD: then you can run docker compose -f docker-compose-prod.yml push or pull
+
+    # image name and a tag name
+    image: public.ecr.aws/e6e1v7l0/jenkins:nginx
+    # To avoid permission issues we define a root user
+    user: root
+    # Any name that can further help ID this container
+    container_name: nginx-prod
+    build: ./nginx/
+    ports:
+      - "80:80"
+      - 443:443
+    volumes:
+      # switch between dev (no ssl) and production (with ssl) nginx configs files
+      - ./nginx/production:/etc/nginx/conf.d
+      - /var/www/html:/var/www/html
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+    links:
+      - jenkins:jenkins
+    depends_on:
+      - jenkins
+
