@@ -13,11 +13,14 @@ RUN echo "deb [arch=$(dpkg --print-architecture) \
   $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
 
 RUN apt-get update && \
-    apt-get install -y docker-ce-cli && \
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-    unzip awscliv2.zip && \
-    ./aws/install --update
+    apt-get install -y docker-ce-cli
 
+RUN mkdir -p /usr/local/aws-cli/v2 && \
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip -d /usr/local/aws-cli/v2 && \
+    /usr/local/aws-cli/v2/aws/install
+    
+ENV PATH="/usr/local/aws-cli/v2/current/bin:${PATH}"
 
 RUN groupadd docker && \
     usermod -aG docker jenkins && \
